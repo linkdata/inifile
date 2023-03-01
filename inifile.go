@@ -55,7 +55,9 @@ func (inif IniFile) Get(section, key string) (value string, ok bool) {
 // Parse reads INI data from an io.Reader and stores the data in the IniFile.
 // All section and key names will be lowercased and trimmed of whitespace.
 // All values will be trimmed of whitespace.
-func (inif *IniFile) Parse(r io.Reader) (err error) {
+// If dupKeysJoin is nonzero, a duplicate key will append it's value to
+// the preexisting key's value using dupKeysJoin as a separator.
+func (inif *IniFile) Parse(r io.Reader, dupKeysJoin rune) (err error) {
 	*inif = make(IniFile)
 	scanner := bufio.NewScanner(r)
 	section := ""
@@ -67,7 +69,13 @@ func (inif *IniFile) Parse(r io.Reader) (err error) {
 			if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
 				key := inifKey(groups[1])
 				val := strings.TrimSpace(groups[2])
-				inif.Section(section)[key] = val
+				sec := inif.Section(section)
+				if dupKeysJoin != 0 {
+					if oldVal := sec[key]; oldVal != "" {
+						val = oldVal + string(dupKeysJoin) + val
+					}
+				}
+				sec[key] = val
 			} else if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil {
 				section = inifKey(groups[1])
 				inif.Section(section)
@@ -80,11 +88,11 @@ func (inif *IniFile) Parse(r io.Reader) (err error) {
 }
 
 // Load opens the given file and calls Parse.
-func (inif IniFile) Load(fn string) (err error) {
+func (inif IniFile) Load(fn string, dupKeysJoin rune) (err error) {
 	var f *os.File
 	if f, err = os.Open(fn); err == nil {
 		defer f.Close()
-		err = inif.Parse(f)
+		err = inif.Parse(f, dupKeysJoin)
 	}
 	return
 }
