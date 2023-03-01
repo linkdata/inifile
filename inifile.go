@@ -88,7 +88,7 @@ func (inif *IniFile) Parse(r io.Reader, dupKeysJoin rune) (err error) {
 }
 
 // Load opens the given file and calls Parse.
-func (inif IniFile) Load(fn string, dupKeysJoin rune) (err error) {
+func (inif *IniFile) Load(fn string, dupKeysJoin rune) (err error) {
 	var f *os.File
 	if f, err = os.Open(fn); err == nil {
 		defer f.Close()
