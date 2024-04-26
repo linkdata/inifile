@@ -14,7 +14,7 @@ func ParseValue(s string) (value string, err error) {
 		}
 	} else {
 		if idx := strings.IndexAny(value, ";#"); idx >= 0 {
-			value = value[:idx]
+			value = strings.TrimSpace(value[:idx])
 		}
 	}
 	return
