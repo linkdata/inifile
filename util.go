@@ -13,7 +13,8 @@ func Key(s string) string {
 // Load reads INI data from the given file and calls Parse on it.
 func Load(fn string, dupKeysJoin rune) (inif File, err error) {
 	var f *os.File
-	if f, err = os.Open(fn); err == nil {
+	f, err = os.Open(fn) // #nosec G304
+	if err == nil {
 		defer f.Close()
 		inif, err = Parse(f, dupKeysJoin)
 	}
