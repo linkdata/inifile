@@ -1,0 +1,314 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>inifile: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/linkdata/inifile/file.go (100.0%)</option>
+				
+				<option value="file1">github.com/linkdata/inifile/parse.go (100.0%)</option>
+				
+				<option value="file2">github.com/linkdata/inifile/parsevalue.go (100.0%)</option>
+				
+				<option value="file3">github.com/linkdata/inifile/section.go (100.0%)</option>
+				
+				<option value="file4">github.com/linkdata/inifile/syntaxerror.go (100.0%)</option>
+				
+				<option value="file5">github.com/linkdata/inifile/util.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package inifile
+
+// A File represents a parsed INI file.
+// Values found outside of a named section are in the "" section.
+//
+// The map keys are all lowercase and trimmed of whitespace.
+type File map[string]Section
+
+// Section returns a named Section. A Section will be created if one does not already exist for the given name.
+//
+// Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+func (inif File) Section(name string) (section Section) <span class="cov8" title="1">{
+        name = Key(name)
+        if section = inif[name]; section == nil </span><span class="cov8" title="1">{
+                section = make(Section)
+                inif[name] = section
+        }</span>
+        <span class="cov8" title="1">return</span>
+}
+
+// Set sets the value for a key in a section.
+//
+// The section is created if needed.
+// The value will be whitespace trimmed before being stored.
+// If join is nonzero, the value is appended to any pre-existing value using join as the separator.
+//
+// Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+func (inif File) Set(section, key, value string, join rune) <span class="cov8" title="1">{
+        inif.Section(section).Set(key, value, join)
+}</span>
+
+// Get looks up a value for a key in a section and returns that value, along with a boolean result similar to a map lookup.
+//
+// Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+func (inif File) Get(section, key string) (value string, ok bool) <span class="cov8" title="1">{
+        return inif[Key(section)].Get(key)
+}</span>
+
+// GetDefault calls Get but returns dflt if the section or key was not found.
+//
+// Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+func (inif File) GetDefault(section, key, dflt string) string <span class="cov8" title="1">{
+        return inif[Key(section)].GetDefault(key, dflt)
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package inifile
+
+import (
+        "bufio"
+        "io"
+        "regexp"
+        "strings"
+)
+
+var (
+        iniSectionRegex = regexp.MustCompile(`^\[(.*)\]$`)
+        iniAssignRegex  = regexp.MustCompile(`^([^=]+)=(.*)$`)
+)
+
+// Parse reads INI data from an io.Reader and returns a new File.
+//
+// All values will be trimmed of whitespace.
+//
+// If dupKeysJoin is zero, a duplicate key will replace the previous value.
+// If dupKeysJoin is nonzero, a duplicate key will append it's value to
+// the preexisting key's value using dupKeysJoin as a separator.
+func Parse(r io.Reader, dupKeysJoin rune) (File, error) <span class="cov8" title="1">{
+        inif := make(File)
+        scanner := bufio.NewScanner(r)
+        section := ""
+        lineNum := 0
+        for scanner.Scan() </span><span class="cov8" title="1">{
+                lineNum++
+                line := strings.TrimSpace(scanner.Text())
+                if len(line) &gt; 0 &amp;&amp; line[0] != ';' &amp;&amp; line[0] != '#' </span><span class="cov8" title="1">{
+                        if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
+                                value, err := ParseValue(groups[2])
+                                if err != nil </span><span class="cov8" title="1">{
+                                        return nil, SyntaxError{lineNum, strings.TrimSpace(groups[2])}
+                                }</span>
+                                <span class="cov8" title="1">inif.Section(section).Set(groups[1], value, dupKeysJoin)</span>
+                        } else<span class="cov8" title="1"> if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
+                                section = Key(groups[1])
+                        }</span> else<span class="cov8" title="1"> {
+                                return nil, SyntaxError{lineNum, line}
+                        }</span>
+                }
+        }
+        <span class="cov8" title="1">return inif, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package inifile
+
+import (
+        "strconv"
+        "strings"
+)
+
+// ParseValue parses a value string from an INI-file, unquoting and removing trailing comments if needed.
+func ParseValue(s string) (value string, err error) <span class="cov8" title="1">{
+        value = strings.TrimSpace(s)
+        if strings.IndexAny(value, `'"`) == 0 </span><span class="cov8" title="1">{
+                if value, err = strconv.QuotedPrefix(value); err == nil </span><span class="cov8" title="1">{
+                        value, err = strconv.Unquote(value)
+                }</span>
+        } else<span class="cov8" title="1"> {
+                if idx := strings.IndexAny(value, ";#"); idx &gt;= 0 </span><span class="cov8" title="1">{
+                        value = strings.TrimSpace(value[:idx])
+                }</span>
+        }
+        <span class="cov8" title="1">return</span>
+}
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package inifile
+
+// A Section represents a single section of an INI file.
+//
+// The map keys are all lowercase and trimmed of whitespace.
+type Section map[string]string
+
+// Set sets the value for a key in a section.
+//
+// If join is nonzero, the value is appended to any pre-existing value using join as the separator.
+//
+// Key strings are case-insensitive and ignore leading and trailing whitespace.
+func (sect Section) Set(key, value string, join rune) <span class="cov8" title="1">{
+        key = Key(key)
+        if join != 0 </span><span class="cov8" title="1">{
+                if prev, ok := sect[key]; ok </span><span class="cov8" title="1">{
+                        value = prev + string(join) + value
+                }</span>
+        }
+        <span class="cov8" title="1">sect[key] = value</span>
+}
+
+// Get looks up a value for a key in a section and returns that value, along with a boolean result similar to a map lookup.
+//
+// Key strings are case-insensitive and ignore leading and trailing whitespace.
+func (sect Section) Get(key string) (value string, ok bool) <span class="cov8" title="1">{
+        value, ok = sect[Key(key)]
+        return
+}</span>
+
+// GetDefault calls Get but returns dflt if the key was not found.
+//
+// Key strings are case-insensitive and ignore leading and trailing whitespace.
+func (sect Section) GetDefault(key, dflt string) string <span class="cov8" title="1">{
+        if value, ok := sect.Get(key); ok </span><span class="cov8" title="1">{
+                return value
+        }</span>
+        <span class="cov8" title="1">return dflt</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package inifile
+
+import "fmt"
+
+// ErrSyntax is returned when there is a syntax error in an INI file.
+var ErrSyntax SyntaxError
+
+type SyntaxError struct {
+        Line   int    // Line number where the error was found
+        Source string // The contents of the erroneous line, without leading or trailing whitespace
+}
+
+func (e SyntaxError) Is(err error) (ok bool) <span class="cov8" title="1">{
+        _, ok = err.(SyntaxError)
+        return
+}</span>
+
+func (e SyntaxError) Error() string <span class="cov8" title="1">{
+        return fmt.Sprintf("invalid INI syntax on line %d: %s", e.Line, e.Source)
+}</span>
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package inifile
+
+import (
+        "os"
+        "strings"
+)
+
+// Key returns s lowercased and with whitespace trimmed.
+func Key(s string) string <span class="cov8" title="1">{
+        return strings.ToLower(strings.TrimSpace(s))
+}</span>
+
+// Load reads INI data from the given file and calls Parse on it.
+func Load(fn string, dupKeysJoin rune) (inif File, err error) <span class="cov8" title="1">{
+        var f *os.File
+        f, err = os.Open(fn) // #nosec G304
+        if err == nil </span><span class="cov8" title="1">{
+                defer f.Close()
+                inif, err = Parse(f, dupKeysJoin)
+        }</span>
+        <span class="cov8" title="1">return</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>
