@@ -150,7 +150,7 @@ var (
 //
 // Unquoted values are trimmed of whitespace.
 // Quoted values preserve whitespace inside the quotes.
-// Quoted values may contain arbitrary bytes and can be invalid UTF-8.
+// Parsed values are always valid UTF-8.
 //
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
@@ -199,7 +199,7 @@ import (
 )
 
 // ParseValue parses a value string from an INI-file, unquoting and removing trailing comments if needed.
-// Quoted values may contain arbitrary bytes and can be invalid UTF-8.
+// Parsed values are always valid UTF-8.
 func ParseValue(s string) (value string, err error) <span class="cov8" title="1">{
         if value = strings.TrimSpace(s); len(value) &gt; 0 </span><span class="cov8" title="1">{
                 switch value[0] </span>{
@@ -251,14 +251,9 @@ func parseSingleQuoted(value string) (result, tail string, err error) <span clas
                         return
                 }</span>
                 <span class="cov8" title="1">var singlebyte rune
-                var multibyte bool
-                if singlebyte, multibyte, value, err = strconv.UnquoteChar(value, '\''); err == nil </span><span class="cov8" title="1">{
-                        if multibyte </span><span class="cov8" title="1">{
-                                b.WriteRune(singlebyte)
-                        }</span> else<span class="cov8" title="1"> {
-                                b.WriteByte(byte(singlebyte)) // #nosec G115
-                        }</span>
-                }
+                if singlebyte, _, value, err = strconv.UnquoteChar(value, '\''); err == nil </span><span class="cov8" title="1">{
+                        b.WriteRune(singlebyte)
+                }</span>
         }
         <span class="cov8" title="1">err = errors.Join(err, strconv.ErrSyntax)
         return</span>
