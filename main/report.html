@@ -185,16 +185,74 @@ import (
 
 // ParseValue parses a value string from an INI-file, unquoting and removing trailing comments if needed.
 func ParseValue(s string) (value string, err error) <span class="cov8" title="1">{
-        value = strings.TrimSpace(s)
-        if strings.IndexAny(value, `'"`) == 0 </span><span class="cov8" title="1">{
-                if value, err = strconv.QuotedPrefix(value); err == nil </span><span class="cov8" title="1">{
-                        value, err = strconv.Unquote(value)
-                }</span>
-        } else<span class="cov8" title="1"> {
-                if idx := strings.IndexAny(value, ";#"); idx &gt;= 0 </span><span class="cov8" title="1">{
-                        value = strings.TrimSpace(value[:idx])
+        if value = strings.TrimSpace(s); len(value) &gt; 0 </span><span class="cov8" title="1">{
+                switch value[0] </span>{
+                case '"':<span class="cov8" title="1">
+                        value, err = parseDoubleQuotedValue(value)</span>
+                case '\'':<span class="cov8" title="1">
+                        value, err = parseSingleQuotedValue(value)</span>
+                default:<span class="cov8" title="1">
+                        value = parseUnquotedValue(value)</span>
+                }
+        }
+        <span class="cov8" title="1">return</span>
+}
+
+func validateTail(tail string) (err error) <span class="cov8" title="1">{
+        tail = strings.TrimSpace(tail)
+        if tail != "" &amp;&amp; tail[0] != ';' &amp;&amp; tail[0] != '#' </span><span class="cov8" title="1">{
+                err = strconv.ErrSyntax
+        }</span>
+        <span class="cov8" title="1">return</span>
+}
+
+func parseDoubleQuotedValue(value string) (result string, err error) <span class="cov8" title="1">{
+        var quoted string
+        if quoted, err = strconv.QuotedPrefix(value); err == nil </span><span class="cov8" title="1">{
+                if err = validateTail(value[len(quoted):]); err == nil </span><span class="cov8" title="1">{
+                        result, err = strconv.Unquote(quoted)
                 }</span>
         }
+        <span class="cov8" title="1">return</span>
+}
+
+func parseSingleQuotedValue(value string) (result string, err error) <span class="cov8" title="1">{
+        var tail string
+        if result, tail, err = parseSingleQuoted(value); err == nil </span><span class="cov8" title="1">{
+                err = validateTail(tail)
+        }</span>
+        <span class="cov8" title="1">return</span>
+}
+
+func parseSingleQuoted(value string) (result, tail string, err error) <span class="cov8" title="1">{
+        var b strings.Builder
+        b.Grow(len(value))
+        value = value[1:]
+        for err == nil &amp;&amp; len(value) &gt; 0 </span><span class="cov8" title="1">{
+                if value[0] == '\'' </span><span class="cov8" title="1">{
+                        result = b.String()
+                        tail = value[1:]
+                        return
+                }</span>
+                <span class="cov8" title="1">var singlebyte rune
+                var multibyte bool
+                if singlebyte, multibyte, value, err = strconv.UnquoteChar(value, '\''); err == nil </span><span class="cov8" title="1">{
+                        if multibyte </span><span class="cov8" title="1">{
+                                b.WriteRune(singlebyte)
+                        }</span> else<span class="cov8" title="1"> {
+                                b.WriteByte(byte(singlebyte)) // #nosec G115
+                        }</span>
+                }
+        }
+        <span class="cov8" title="1">err = strconv.ErrSyntax
+        return</span>
+}
+
+func parseUnquotedValue(value string) (result string) <span class="cov8" title="1">{
+        result = value
+        if idx := strings.IndexAny(value, ";#"); idx &gt;= 0 </span><span class="cov8" title="1">{
+                result = strings.TrimSpace(value[:idx])
+        }</span>
         <span class="cov8" title="1">return</span>
 }
 </pre>
