@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	iniSectionRegex = regexp.MustCompile(`^\[(.*)\](?:\s*[;#].*)?$`)
+	iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
 	iniAssignRegex  = regexp.MustCompile(`^([^=]+)=(.*)$`)
 )
 

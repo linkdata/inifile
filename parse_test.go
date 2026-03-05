@@ -64,3 +64,14 @@ k2=v2
 		t.Fatalf("Parse() value s2/k2 = %q, %v; want %q, true", got, ok, "v2")
 	}
 }
+
+func TestParseRejectsMalformedSectionHeader(t *testing.T) {
+	_, err := Parse(strings.NewReader("[a][b]\nk=v\n"), 0)
+	want := SyntaxError{Line: 1, Source: "[a][b]"}
+	if !errors.Is(err, want) {
+		t.Fatalf("Parse() error = %v, want %v", err, want)
+	}
+	if err.Error() != want.Error() {
+		t.Fatalf("Parse() error string = %q, want %q", err.Error(), want.Error())
+	}
+}
