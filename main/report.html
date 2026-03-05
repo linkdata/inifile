@@ -136,14 +136,16 @@ func (inif File) GetDefault(section, key, dflt string) string <span class="cov8"
 
 import (
         "bufio"
+        "errors"
         "io"
         "regexp"
         "strings"
 )
 
 var (
-        iniSectionRegex = regexp.MustCompile(`^\[(.*)\](?:\s*[;#].*)?$`)
+        iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
         iniAssignRegex  = regexp.MustCompile(`^([^=]+)=(.*)$`)
+        ErrNilReader    = errors.New("nil reader")
 )
 
 // Parse reads INI data from an io.Reader and returns a new File.
@@ -156,9 +158,12 @@ var (
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
 // the preexisting key's value using dupKeysJoin as a separator.
 //
-// r must be a non-nil reader. Passing a nil reader causes a panic.
+// r must be a non-nil reader. Passing a nil reader returns ErrNilReader.
 func Parse(r io.Reader, dupKeysJoin rune) (File, error) <span class="cov8" title="1">{
-        inif := make(File)
+        if r == nil </span><span class="cov8" title="1">{
+                return nil, ErrNilReader
+        }</span>
+        <span class="cov8" title="1">inif := make(File)
         scanner := bufio.NewScanner(r)
         section := ""
         lineNum := 0
