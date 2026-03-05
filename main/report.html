@@ -85,11 +85,15 @@
 // Values found outside of a named section are in the "" section.
 //
 // The map keys are all lowercase and trimmed of whitespace.
+//
+// The zero value of File is read-only. Initialize with make(File) before calling Set or Section.
 type File map[string]Section
 
 // Section returns a named Section. A Section will be created if one does not already exist for the given name.
 //
 // Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+//
+// inif must be initialized with make(File). Calling Section on a nil File panics.
 func (inif File) Section(name string) (section Section) <span class="cov8" title="1">{
         name = Key(name)
         if section = inif[name]; section == nil </span><span class="cov8" title="1">{
@@ -106,6 +110,8 @@ func (inif File) Section(name string) (section Section) <span class="cov8" title
 // If join is nonzero, the value is appended to any pre-existing value using join as the separator.
 //
 // Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+//
+// inif must be initialized with make(File). Calling Set on a nil File panics.
 func (inif File) Set(section, key, value string, join rune) <span class="cov8" title="1">{
         inif.Section(section).Set(key, value, join)
 }</span>
@@ -146,6 +152,8 @@ var (
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
 // the preexisting key's value using dupKeysJoin as a separator.
+//
+// r must be a non-nil reader. Passing a nil reader causes a panic.
 func Parse(r io.Reader, dupKeysJoin rune) (File, error) <span class="cov8" title="1">{
         inif := make(File)
         scanner := bufio.NewScanner(r)
