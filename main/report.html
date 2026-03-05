@@ -260,7 +260,7 @@ func parseSingleQuoted(value string) (result, tail string, err error) <span clas
 }
 
 func parseUnquotedValue(value string) (result string) <span class="cov8" title="1">{
-        result = value
+        result = strings.ToValidUTF8(value, "\uFFFD")
         if idx := strings.IndexAny(value, ";#"); idx &gt;= 0 </span><span class="cov8" title="1">{
                 result = strings.TrimSpace(value[:idx])
         }</span>
