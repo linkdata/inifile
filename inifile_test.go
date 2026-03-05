@@ -148,3 +148,22 @@ s = '  abc  '
 		t.Fatalf("Parse() single-quoted value = %q, want %q", got, "  abc  ")
 	}
 }
+
+func TestParseSectionTrailingComments(t *testing.T) {
+	inif, err := Parse(strings.NewReader(`
+[s1] # comment
+k1=v1
+[s2];comment
+k2=v2
+`), 0)
+	if err != nil {
+		t.Fatalf("Parse() error = %v, want nil", err)
+	}
+
+	if got, ok := inif.Get("s1", "k1"); !ok || got != "v1" {
+		t.Fatalf("Parse() value s1/k1 = %q, %v; want %q, true", got, ok, "v1")
+	}
+	if got, ok := inif.Get("s2", "k2"); !ok || got != "v2" {
+		t.Fatalf("Parse() value s2/k2 = %q, %v; want %q, true", got, ok, "v2")
+	}
+}
