@@ -16,7 +16,6 @@ Parsed values are always valid UTF-8.
 Keys appearing more than once will either replace previous values or append to them with a separator.
 
 API notes:
-- `Parse` requires a non-nil `io.Reader`.
 - `File` must be initialized with `make(inifile.File)` before calling mutating methods (`Set`, `Section`).
 - `File.Set` stores values as-is; INI parsing rules are applied by `Parse`/`Load`.
 
