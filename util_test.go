@@ -89,18 +89,30 @@ func TestLoad(t *testing.T) {
 					t.Errorf("Load() = %v, want %v", gotInif, tt.wantInif)
 				}
 			} else {
-				if !errors.Is(err, tt.wantErr) {
-					t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
-					return
-				}
-				if errors.Is(err, ErrSyntax) {
+				if errors.Is(tt.wantErr, ErrSyntax) {
+					if !errors.Is(err, ErrSyntax) {
+						t.Errorf("Load() error = %v, want syntax error", err)
+						return
+					}
+					var got SyntaxError
+					if !errors.As(err, &got) {
+						t.Errorf("Load() error = %v, want As(*SyntaxError)=true", err)
+						return
+					}
+					want := tt.wantErr.(SyntaxError)
+					if got.Line != want.Line || got.Source != want.Source {
+						t.Errorf("Load() syntax error = %#v, want %#v", got, want)
+						return
+					}
 					errstr := err.Error()
 					wantstr := tt.wantErr.Error()
 					if errstr != wantstr {
 						t.Errorf("Load() error = %q, wantErr %q", err, tt.wantErr)
 						return
 					}
-
+				} else if !errors.Is(err, tt.wantErr) {
+					t.Errorf("Load() error = %v, wantErr %v", err, tt.wantErr)
+					return
 				}
 			}
 		})

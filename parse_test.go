@@ -3,6 +3,7 @@ package inifile
 import (
 	"bufio"
 	"errors"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -75,10 +76,42 @@ k2=v2
 func TestParseRejectsMalformedSectionHeader(t *testing.T) {
 	_, err := Parse(strings.NewReader("[a][b]\nk=v\n"), 0)
 	want := SyntaxError{Line: 1, Source: "[a][b]"}
-	if !errors.Is(err, want) {
-		t.Fatalf("Parse() error = %v, want %v", err, want)
+	if !errors.Is(err, ErrSyntax) {
+		t.Fatalf("errors.Is(err, ErrSyntax) = false, want true")
+	}
+
+	var got SyntaxError
+	if !errors.As(err, &got) {
+		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
+	}
+	if got.Line != want.Line || got.Source != want.Source {
+		t.Fatalf("Parse() syntax error = %#v, want %#v", got, want)
 	}
 	if err.Error() != want.Error() {
 		t.Fatalf("Parse() error string = %q, want %q", err.Error(), want.Error())
+	}
+}
+
+func TestParseSyntaxErrorWrapsSourceError(t *testing.T) {
+	_, err := Parse(strings.NewReader("k='broken\n"), 0)
+	if err == nil {
+		t.Fatalf("Parse() error = nil, want non-nil")
+	}
+	if !errors.Is(err, ErrSyntax) {
+		t.Fatalf("errors.Is(err, ErrSyntax) = false, want true")
+	}
+	if !errors.Is(err, strconv.ErrSyntax) {
+		t.Fatalf("errors.Is(err, strconv.ErrSyntax) = false, want true")
+	}
+
+	var got SyntaxError
+	if !errors.As(err, &got) {
+		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
+	}
+	if got.Line != 1 || got.Source != "'broken" {
+		t.Fatalf("Parse() syntax error = %#v", got)
+	}
+	if !errors.Is(got.Err, strconv.ErrSyntax) {
+		t.Fatalf("errors.Is(got.Err, strconv.ErrSyntax) = false, want true")
 	}
 }

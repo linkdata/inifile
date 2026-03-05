@@ -43,13 +43,20 @@ func Parse(r io.Reader, dupKeysJoin rune) (File, error) {
 			if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
 				value, err := ParseValue(groups[2])
 				if err != nil {
-					return nil, SyntaxError{lineNum, strings.TrimSpace(groups[2])}
+					return nil, SyntaxError{
+						Line:   lineNum,
+						Source: strings.TrimSpace(groups[2]),
+						Err:    err,
+					}
 				}
 				inif.Section(section).Set(groups[1], value, dupKeysJoin)
 			} else if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil {
 				section = Key(groups[1])
 			} else {
-				return nil, SyntaxError{lineNum, line}
+				return nil, SyntaxError{
+					Line:   lineNum,
+					Source: line,
+				}
 			}
 		}
 	}

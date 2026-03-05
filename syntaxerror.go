@@ -8,11 +8,15 @@ var ErrSyntax SyntaxError
 type SyntaxError struct {
 	Line   int    // Line number where the error was found
 	Source string // The contents of the erroneous line, without leading or trailing whitespace
+	Err    error  // Optional source error
 }
 
-func (e SyntaxError) Is(err error) (ok bool) {
-	_, ok = err.(SyntaxError)
-	return
+func (e SyntaxError) Is(target error) bool {
+	return target == ErrSyntax
+}
+
+func (e SyntaxError) Unwrap() error {
+	return e.Err
 }
 
 func (e SyntaxError) Error() string {
