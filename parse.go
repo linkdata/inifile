@@ -29,6 +29,9 @@ func Parse(r io.Reader, dupKeysJoin rune) (File, error) {
 	for scanner.Scan() {
 		lineNum++
 		line := strings.TrimSpace(scanner.Text())
+		if lineNum == 1 {
+			line = strings.TrimPrefix(line, "\uFEFF")
+		}
 		if len(line) > 0 && line[0] != ';' && line[0] != '#' {
 			if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
 				value, err := ParseValue(groups[2])

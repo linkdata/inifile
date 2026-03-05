@@ -116,3 +116,14 @@ func TestParseScannerError(t *testing.T) {
 		t.Fatalf("Parse() error = %v, want %v", err, bufio.ErrTooLong)
 	}
 }
+
+func TestParseUTF8BOM(t *testing.T) {
+	inif, err := Parse(strings.NewReader("\uFEFF[s]\nk=v\n"), 0)
+	if err != nil {
+		t.Fatalf("Parse() error = %v, want nil", err)
+	}
+	got, ok := inif.Get("s", "k")
+	if !ok || got != "v" {
+		t.Fatalf("Parse() value = %q, %v; want %q, true", got, ok, "v")
+	}
+}
