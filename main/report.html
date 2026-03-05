@@ -168,7 +168,11 @@ func Parse(r io.Reader, dupKeysJoin rune) (File, error) <span class="cov8" title
                         }</span>
                 }
         }
-        <span class="cov8" title="1">return inif, nil</span>
+        <span class="cov8" title="1">err := scanner.Err()
+        if err != nil </span><span class="cov8" title="1">{
+                inif = nil
+        }</span>
+        <span class="cov8" title="1">return inif, err</span>
 }
 </pre>
 		
