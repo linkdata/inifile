@@ -7,7 +7,7 @@ import (
 )
 
 // ParseValue parses a value string from an INI-file, unquoting and removing trailing comments if needed.
-// Quoted values may contain arbitrary bytes and can be invalid UTF-8.
+// Parsed values are always valid UTF-8.
 func ParseValue(s string) (value string, err error) {
 	if value = strings.TrimSpace(s); len(value) > 0 {
 		switch value[0] {
@@ -59,13 +59,8 @@ func parseSingleQuoted(value string) (result, tail string, err error) {
 			return
 		}
 		var singlebyte rune
-		var multibyte bool
-		if singlebyte, multibyte, value, err = strconv.UnquoteChar(value, '\''); err == nil {
-			if multibyte {
-				b.WriteRune(singlebyte)
-			} else {
-				b.WriteByte(byte(singlebyte)) // #nosec G115
-			}
+		if singlebyte, _, value, err = strconv.UnquoteChar(value, '\''); err == nil {
+			b.WriteRune(singlebyte)
 		}
 	}
 	err = errors.Join(err, strconv.ErrSyntax)
