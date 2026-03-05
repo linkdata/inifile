@@ -1,6 +1,7 @@
 package inifile
 
 import (
+	"errors"
 	"strconv"
 	"strings"
 )
@@ -66,7 +67,7 @@ func parseSingleQuoted(value string) (result, tail string, err error) {
 			}
 		}
 	}
-	err = strconv.ErrSyntax
+	err = errors.Join(err, strconv.ErrSyntax)
 	return
 }
 
