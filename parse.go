@@ -19,6 +19,8 @@ var (
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
 // the preexisting key's value using dupKeysJoin as a separator.
+//
+// r must be a non-nil reader. Passing a nil reader causes a panic.
 func Parse(r io.Reader, dupKeysJoin rune) (File, error) {
 	inif := make(File)
 	scanner := bufio.NewScanner(r)

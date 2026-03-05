@@ -13,6 +13,10 @@ Supports line comments, trailing comments and quoted values.
 
 Keys appearing more than once will either replace previous values or append to them with a separator.
 
+API notes:
+- `Parse` requires a non-nil `io.Reader`.
+- `File` must be initialized with `make(inifile.File)` before calling mutating methods (`Set`, `Section`).
+
 ```go
 func ExampleParse() {
 	const initext = `

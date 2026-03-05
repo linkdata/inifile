@@ -4,11 +4,15 @@ package inifile
 // Values found outside of a named section are in the "" section.
 //
 // The map keys are all lowercase and trimmed of whitespace.
+//
+// The zero value of File is read-only. Initialize with make(File) before calling Set or Section.
 type File map[string]Section
 
 // Section returns a named Section. A Section will be created if one does not already exist for the given name.
 //
 // Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+//
+// inif must be initialized with make(File). Calling Section on a nil File panics.
 func (inif File) Section(name string) (section Section) {
 	name = Key(name)
 	if section = inif[name]; section == nil {
@@ -25,6 +29,8 @@ func (inif File) Section(name string) (section Section) {
 // If join is nonzero, the value is appended to any pre-existing value using join as the separator.
 //
 // Section and key strings are case-insensitive and ignore leading and trailing whitespace.
+//
+// inif must be initialized with make(File). Calling Set on a nil File panics.
 func (inif File) Set(section, key, value string, join rune) {
 	inif.Section(section).Set(key, value, join)
 }
