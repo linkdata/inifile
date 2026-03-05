@@ -127,3 +127,24 @@ func TestParseUTF8BOM(t *testing.T) {
 		t.Fatalf("Parse() value = %q, %v; want %q, true", got, ok, "v")
 	}
 }
+
+func TestParseValueWhitespaceRules(t *testing.T) {
+	inif, err := Parse(strings.NewReader(`
+u =   abc   
+d = "  abc  "
+s = '  abc  '
+`), 0)
+	if err != nil {
+		t.Fatalf("Parse() error = %v, want nil", err)
+	}
+
+	if got, _ := inif.Get("", "u"); got != "abc" {
+		t.Fatalf("Parse() unquoted value = %q, want %q", got, "abc")
+	}
+	if got, _ := inif.Get("", "d"); got != "  abc  " {
+		t.Fatalf("Parse() double-quoted value = %q, want %q", got, "  abc  ")
+	}
+	if got, _ := inif.Get("", "s"); got != "  abc  " {
+		t.Fatalf("Parse() single-quoted value = %q, want %q", got, "  abc  ")
+	}
+}
