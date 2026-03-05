@@ -25,8 +25,29 @@ func TestLoad(t *testing.T) {
 			},
 		},
 		{
+			name: "tests/singlequoted.ini",
+			wantInif: File{
+				"": Section{
+					"key1": "abc",
+					"key2": "a",
+					"key3": "a'b",
+					"key4": "x",
+					"key5": "\u00e5",
+					"key6": "\U0001f642",
+				},
+			},
+		},
+		{
 			name:    "tests/brokenquote.ini",
 			wantErr: SyntaxError{Line: 1, Source: "\"broken"},
+		},
+		{
+			name:    "tests/brokensinglequote.ini",
+			wantErr: SyntaxError{Line: 1, Source: "'broken"},
+		},
+		{
+			name:    "tests/trailingjunk.ini",
+			wantErr: SyntaxError{Line: 1, Source: "\"ok\"junk"},
 		},
 		{
 			name:    "tests/nonexistant.ini",
