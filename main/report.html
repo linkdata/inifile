@@ -259,12 +259,11 @@ func parseSingleQuoted(value string) (result, tail string, err error) <span clas
         return</span>
 }
 
-func parseUnquotedValue(value string) (result string) <span class="cov8" title="1">{
-        result = strings.ToValidUTF8(value, "\uFFFD")
+func parseUnquotedValue(value string) string <span class="cov8" title="1">{
         if idx := strings.IndexAny(value, ";#"); idx &gt;= 0 </span><span class="cov8" title="1">{
-                result = strings.TrimSpace(value[:idx])
+                value = strings.TrimSpace(value[:idx])
         }</span>
-        <span class="cov8" title="1">return</span>
+        <span class="cov8" title="1">return strings.ToValidUTF8(value, "\uFFFD")</span>
 }
 </pre>
 		
