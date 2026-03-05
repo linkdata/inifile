@@ -177,13 +177,20 @@ func Parse(r io.Reader, dupKeysJoin rune) (File, error) <span class="cov8" title
                         if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
                                 value, err := ParseValue(groups[2])
                                 if err != nil </span><span class="cov8" title="1">{
-                                        return nil, SyntaxError{lineNum, strings.TrimSpace(groups[2])}
+                                        return nil, SyntaxError{
+                                                Line:   lineNum,
+                                                Source: strings.TrimSpace(groups[2]),
+                                                Err:    err,
+                                        }
                                 }</span>
                                 <span class="cov8" title="1">inif.Section(section).Set(groups[1], value, dupKeysJoin)</span>
                         } else<span class="cov8" title="1"> if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
                                 section = Key(groups[1])
                         }</span> else<span class="cov8" title="1"> {
-                                return nil, SyntaxError{lineNum, line}
+                                return nil, SyntaxError{
+                                        Line:   lineNum,
+                                        Source: line,
+                                }
                         }</span>
                 }
         }
@@ -323,11 +330,15 @@ var ErrSyntax SyntaxError
 type SyntaxError struct {
         Line   int    // Line number where the error was found
         Source string // The contents of the erroneous line, without leading or trailing whitespace
+        Err    error  // Optional source error
 }
 
-func (e SyntaxError) Is(err error) (ok bool) <span class="cov8" title="1">{
-        _, ok = err.(SyntaxError)
-        return
+func (e SyntaxError) Is(target error) bool <span class="cov8" title="1">{
+        return target == ErrSyntax
+}</span>
+
+func (e SyntaxError) Unwrap() error <span class="cov8" title="1">{
+        return e.Err
 }</span>
 
 func (e SyntaxError) Error() string <span class="cov8" title="1">{
