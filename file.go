@@ -25,7 +25,8 @@ func (inif File) Section(name string) (section Section) {
 // Set sets the value for a key in a section.
 //
 // The section is created if needed.
-// The value will be whitespace trimmed before being stored.
+// The value is stored as-is.
+// Use Parse to apply INI parsing rules (such as trimming unquoted values).
 // If join is nonzero, the value is appended to any pre-existing value using join as the separator.
 //
 // Section and key strings are case-insensitive and ignore leading and trailing whitespace.

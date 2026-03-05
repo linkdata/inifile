@@ -10,12 +10,14 @@ Simple INI file reader.
 Section and key names are case-insensitive and ignore leading and trailing whitespace.
 
 Supports line comments, trailing comments and quoted values.
+Unquoted values are whitespace trimmed; quoted values preserve whitespace inside quotes.
 
 Keys appearing more than once will either replace previous values or append to them with a separator.
 
 API notes:
 - `Parse` requires a non-nil `io.Reader`.
 - `File` must be initialized with `make(inifile.File)` before calling mutating methods (`Set`, `Section`).
+- `File.Set` stores values as-is; INI parsing rules are applied by `Parse`/`Load`.
 
 ```go
 func ExampleParse() {
@@ -28,7 +30,7 @@ Username = " user name " # values can be quoted preserve whitespace or embed quo
 
 # section names are case insensitive and ignores leading and trailing whitespace
 [ HTTP ] 
- port = 8080 # keys and values are stripped of leading and trailing whitespace
+ port = 8080 # keys and unquoted values are stripped of leading and trailing whitespace
 port=8081 # keys appearing more than once either append or replace values
 `
 

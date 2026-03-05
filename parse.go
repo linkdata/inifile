@@ -14,7 +14,8 @@ var (
 
 // Parse reads INI data from an io.Reader and returns a new File.
 //
-// All values will be trimmed of whitespace.
+// Unquoted values are trimmed of whitespace.
+// Quoted values preserve whitespace inside the quotes.
 //
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
