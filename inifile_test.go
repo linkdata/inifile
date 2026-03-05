@@ -1,9 +1,11 @@
 package inifile
 
 import (
+	"bufio"
 	"errors"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -84,5 +86,12 @@ func TestLoad(t *testing.T) {
 
 			}
 		})
+	}
+}
+
+func TestParseScannerError(t *testing.T) {
+	_, err := Parse(strings.NewReader("k="+strings.Repeat("a", 70*1024)+"\n"), 0)
+	if !errors.Is(err, bufio.ErrTooLong) {
+		t.Fatalf("Parse() error = %v, want %v", err, bufio.ErrTooLong)
 	}
 }

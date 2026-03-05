@@ -41,5 +41,9 @@ func Parse(r io.Reader, dupKeysJoin rune) (File, error) {
 			}
 		}
 	}
-	return inif, nil
+	err := scanner.Err()
+	if err != nil {
+		inif = nil
+	}
+	return inif, err
 }
