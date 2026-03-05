@@ -68,7 +68,7 @@ func parseSingleQuoted(value string) (result, tail string, err error) {
 }
 
 func parseUnquotedValue(value string) (result string) {
-	result = value
+	result = strings.ToValidUTF8(value, "\uFFFD")
 	if idx := strings.IndexAny(value, ";#"); idx >= 0 {
 		result = strings.TrimSpace(value[:idx])
 	}
