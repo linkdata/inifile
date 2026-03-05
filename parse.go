@@ -2,6 +2,7 @@ package inifile
 
 import (
 	"bufio"
+	"errors"
 	"io"
 	"regexp"
 	"strings"
@@ -10,6 +11,7 @@ import (
 var (
 	iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
 	iniAssignRegex  = regexp.MustCompile(`^([^=]+)=(.*)$`)
+	ErrNilReader    = errors.New("nil reader")
 )
 
 // Parse reads INI data from an io.Reader and returns a new File.
@@ -22,8 +24,11 @@ var (
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
 // the preexisting key's value using dupKeysJoin as a separator.
 //
-// r must be a non-nil reader. Passing a nil reader causes a panic.
+// r must be a non-nil reader. Passing a nil reader returns ErrNilReader.
 func Parse(r io.Reader, dupKeysJoin rune) (File, error) {
+	if r == nil {
+		return nil, ErrNilReader
+	}
 	inif := make(File)
 	scanner := bufio.NewScanner(r)
 	section := ""

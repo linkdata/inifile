@@ -14,6 +14,13 @@ func TestParseScannerError(t *testing.T) {
 	}
 }
 
+func TestParseNilReader(t *testing.T) {
+	_, err := Parse(nil, 0)
+	if !errors.Is(err, ErrNilReader) {
+		t.Fatalf("Parse() error = %v, want %v", err, ErrNilReader)
+	}
+}
+
 func TestParseUTF8BOM(t *testing.T) {
 	inif, err := Parse(strings.NewReader("\uFEFF[s]\nk=v\n"), 0)
 	if err != nil {
