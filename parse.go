@@ -16,6 +16,7 @@ var (
 //
 // Unquoted values are trimmed of whitespace.
 // Quoted values preserve whitespace inside the quotes.
+// Quoted values may contain arbitrary bytes and can be invalid UTF-8.
 //
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to

@@ -7,6 +7,7 @@ import (
 )
 
 // ParseValue parses a value string from an INI-file, unquoting and removing trailing comments if needed.
+// Quoted values may contain arbitrary bytes and can be invalid UTF-8.
 func ParseValue(s string) (value string, err error) {
 	if value = strings.TrimSpace(s); len(value) > 0 {
 		switch value[0] {
