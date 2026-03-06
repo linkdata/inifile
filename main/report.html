@@ -136,16 +136,15 @@ func (inif File) GetDefault(section, key, dflt string) string <span class="cov8"
 
 import (
         "bufio"
-        "errors"
         "io"
         "regexp"
+        "strconv"
         "strings"
 )
 
 var (
         iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
-        iniAssignRegex  = regexp.MustCompile(`^([^=]+)=(.*)$`)
-        ErrNilReader    = errors.New("nil reader")
+        iniAssignRegex  = regexp.MustCompile(`^\s*([^=]+)\s*=\s*(.*)\s*$`)
 )
 
 // Parse reads INI data from an io.Reader and returns a new File.
@@ -158,47 +157,51 @@ var (
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
 // the preexisting key's value using dupKeysJoin as a separator.
 //
-// r must be a non-nil reader. Passing a nil reader returns ErrNilReader.
-func Parse(r io.Reader, dupKeysJoin rune) (File, error) <span class="cov8" title="1">{
-        if r == nil </span><span class="cov8" title="1">{
-                return nil, ErrNilReader
-        }</span>
-        <span class="cov8" title="1">inif := make(File)
-        scanner := bufio.NewScanner(r)
-        section := ""
-        lineNum := 0
-        for scanner.Scan() </span><span class="cov8" title="1">{
-                lineNum++
-                line := strings.TrimSpace(scanner.Text())
-                if lineNum == 1 </span><span class="cov8" title="1">{
-                        line = strings.TrimPrefix(line, "\uFEFF")
-                }</span>
-                <span class="cov8" title="1">if len(line) &gt; 0 &amp;&amp; line[0] != ';' &amp;&amp; line[0] != '#' </span><span class="cov8" title="1">{
-                        if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
-                                value, err := ParseValue(groups[2])
-                                if err != nil </span><span class="cov8" title="1">{
-                                        return nil, SyntaxError{
-                                                Line:   lineNum,
-                                                Source: strings.TrimSpace(groups[2]),
-                                                Err:    err,
-                                        }
-                                }</span>
-                                <span class="cov8" title="1">inif.Section(section).Set(groups[1], value, dupKeysJoin)</span>
-                        } else<span class="cov8" title="1"> if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
-                                section = Key(groups[1])
-                        }</span> else<span class="cov8" title="1"> {
-                                return nil, SyntaxError{
-                                        Line:   lineNum,
-                                        Source: line,
-                                }
+// You are allowed to pass in a nil io.Reader, which results in
+// a nil File and error.
+func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) <span class="cov8" title="1">{
+        if r != nil </span><span class="cov8" title="1">{
+                inif = make(File)
+                scanner := bufio.NewScanner(r)
+                section := ""
+                lineNum := 0
+                lineSrc := ""
+                for err == nil &amp;&amp; scanner.Scan() </span><span class="cov8" title="1">{
+                        lineNum++
+                        line := strings.TrimSpace(scanner.Text())
+                        if lineNum == 1 </span><span class="cov8" title="1">{
+                                // Trim UTF-8 BOM if present
+                                line = strings.TrimPrefix(line, "\uFEFF")
                         }</span>
+                        <span class="cov8" title="1">lineSrc = line
+                        if len(line) &gt; 0 &amp;&amp; line[0] != ';' &amp;&amp; line[0] != '#' </span><span class="cov8" title="1">{
+                                if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
+                                        lineSrc = groups[2]
+                                        var value string
+                                        if value, err = ParseValue(groups[2]); err == nil </span><span class="cov8" title="1">{
+                                                inif.Section(section).Set(groups[1], value, dupKeysJoin)
+                                        }</span>
+                                } else<span class="cov8" title="1"> if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
+                                        section = Key(groups[1])
+                                }</span> else<span class="cov8" title="1"> {
+                                        err = strconv.ErrSyntax
+                                }</span>
+                        }
                 }
+                <span class="cov8" title="1">if err == nil </span><span class="cov8" title="1">{
+                        lineSrc = ""
+                        err = scanner.Err()
+                }</span>
+                <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
+                        inif = nil
+                        err = SyntaxError{
+                                Line:   lineNum,
+                                Source: lineSrc,
+                                Err:    err,
+                        }
+                }</span>
         }
-        <span class="cov8" title="1">err := scanner.Err()
-        if err != nil </span><span class="cov8" title="1">{
-                inif = nil
-        }</span>
-        <span class="cov8" title="1">return inif, err</span>
+        <span class="cov8" title="1">return</span>
 }
 </pre>
 		
@@ -322,7 +325,10 @@ func (sect Section) GetDefault(key, dflt string) string <span class="cov8" title
 		
 		<pre class="file" id="file4" style="display: none">package inifile
 
-import "fmt"
+import (
+        "fmt"
+        "strconv"
+)
 
 // ErrSyntax is returned when there is a syntax error in an INI file.
 var ErrSyntax SyntaxError
@@ -342,8 +348,16 @@ func (e SyntaxError) Unwrap() error <span class="cov8" title="1">{
 }</span>
 
 func (e SyntaxError) Error() string <span class="cov8" title="1">{
-        return fmt.Sprintf("invalid INI syntax on line %d: %s", e.Line, e.Source)
-}</span>
+        var linetxt string
+        err := e.Err
+        if err == nil </span><span class="cov8" title="1">{
+                err = strconv.ErrSyntax
+        }</span>
+        <span class="cov8" title="1">if e.Line &gt; 0 </span><span class="cov8" title="1">{
+                linetxt = fmt.Sprintf("line %d: ", e.Line)
+        }</span>
+        <span class="cov8" title="1">return fmt.Sprintf("%s%v: %q", linetxt, err, e.Source)</span>
+}
 </pre>
 		
 		<pre class="file" id="file5" style="display: none">package inifile
