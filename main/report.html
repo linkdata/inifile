@@ -190,8 +190,10 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) <span class="co
                 }
                 <span class="cov8" title="1">if err == nil </span><span class="cov8" title="1">{
                         lineSrc = ""
-                        err = scanner.Err()
-                }</span>
+                        if err = scanner.Err(); err != nil </span><span class="cov8" title="1">{
+                                lineNum++
+                        }</span>
+                }
                 <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
                         inif = nil
                         err = SyntaxError{
@@ -225,6 +227,7 @@ func ParseValue(s string) (value string, err error) <span class="cov8" title="1"
                 default:<span class="cov8" title="1">
                         value = parseUnquotedValue(value)</span>
                 }
+                <span class="cov8" title="1">value = strings.ToValidUTF8(value, "\uFFFD")</span>
         }
         <span class="cov8" title="1">return</span>
 }
@@ -278,7 +281,7 @@ func parseUnquotedValue(value string) string <span class="cov8" title="1">{
         if idx := strings.IndexAny(value, ";#"); idx &gt;= 0 </span><span class="cov8" title="1">{
                 value = strings.TrimSpace(value[:idx])
         }</span>
-        <span class="cov8" title="1">return strings.ToValidUTF8(value, "\uFFFD")</span>
+        <span class="cov8" title="1">return value</span>
 }
 </pre>
 		
