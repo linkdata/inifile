@@ -12,6 +12,7 @@ Section and key names are case-insensitive and ignore leading and trailing white
 Supports line comments, trailing comments and quoted values.
 Unquoted values are whitespace trimmed; quoted values preserve whitespace inside quotes.
 Parsed values are always valid UTF-8.
+Line endings must be LF (`\n`) or CRLF (`\r\n`); CR-only (`\r`) line endings are not supported.
 
 Keys appearing more than once will either replace previous values or append to them with a separator.
 
