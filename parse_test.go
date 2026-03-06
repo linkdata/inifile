@@ -134,6 +134,24 @@ func TestParseRejectsMalformedSectionHeader(t *testing.T) {
 	}
 }
 
+func TestParseAcceptsTrailingCROnFinalLine(t *testing.T) {
+	inif, err := Parse(strings.NewReader("a=1\r"), 0)
+	if err != nil {
+		t.Fatalf("Parse() error = %v, want nil", err)
+	}
+	if got, ok := inif.Get("", "a"); !ok || got != "1" {
+		t.Fatalf("Parse() value = %q, %v; want %q, true", got, ok, "1")
+	}
+
+	inif, err = Parse(strings.NewReader("[s]\r"), 0)
+	if err != nil {
+		t.Fatalf("Parse() error = %v, want nil", err)
+	}
+	if len(inif) != 0 {
+		t.Fatalf("Parse() sections = %d, want %d", len(inif), 0)
+	}
+}
+
 func TestParseRejectsCROnlyLineEndings(t *testing.T) {
 	_, err := Parse(strings.NewReader("a=1\rb=2\r"), 0)
 	if !errors.Is(err, ErrSyntax) {

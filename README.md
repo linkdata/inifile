@@ -12,7 +12,8 @@ Section and key names are case-insensitive and ignore leading and trailing white
 Supports line comments, trailing comments and quoted values.
 Unquoted values are whitespace trimmed; quoted values preserve whitespace inside quotes.
 Parsed values are always valid UTF-8.
-Line endings must be LF (`\n`) or CRLF (`\r\n`); CR-only (`\r`) line endings are not supported.
+Line endings should be LF (`\n`) or CRLF (`\r\n`).
+A trailing CR-only (`\r`) line ending on the final line is tolerated, but bare `\r` elsewhere is treated as a syntax error.
 Lines are limited by `bufio.Scanner`'s default token size (about 64 KiB per line); longer lines fail with scanner errors (for example `bufio.ErrTooLong`).
 Scanner/read errors are returned as-is and no `File` is returned.
 
