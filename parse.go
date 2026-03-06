@@ -37,8 +37,7 @@ func scanLinesWithLineNumbers(scanLineNum, tokenLineNum *int) bufio.SplitFunc {
 // Quoted values preserve whitespace inside the quotes.
 // Parsed values are always valid UTF-8.
 // Input must use LF (\n) or CRLF (\r\n) line endings; CR-only (\r) is not supported.
-// Lines are limited by bufio.Scanner's default token size (~64 KiB); longer
-// lines return a SyntaxError that wraps bufio.ErrTooLong.
+// Lines are limited by bufio.Scanner's default token size (~64 KiB).
 //
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
@@ -73,7 +72,9 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
 			}
 		}
 		if err == nil {
-			err = scanner.Err()
+			if err = scanner.Err(); err != nil {
+				inif = nil
+			}
 		} else {
 			inif = nil
 			err = SyntaxError{
