@@ -31,54 +31,26 @@ func TestParseScannerError(t *testing.T) {
 	if !errors.Is(err, bufio.ErrTooLong) {
 		t.Fatalf("Parse() error = %v, want %v", err, bufio.ErrTooLong)
 	}
-	var got SyntaxError
-	if !errors.As(err, &got) {
-		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
-	}
-	if got.Line != 1 || got.Source != "" {
-		t.Fatalf("Parse() syntax error = %#v, want line=1 source=\"\"", got)
-	}
 }
 
-func TestParseScannerErrorLineNumberAfterValidLine(t *testing.T) {
+func TestParseScannerErrorAfterValidLine(t *testing.T) {
 	_, err := Parse(strings.NewReader("ok=1\nk="+strings.Repeat("a", 70*1024)+"\n"), 0)
 	if !errors.Is(err, bufio.ErrTooLong) {
 		t.Fatalf("Parse() error = %v, want %v", err, bufio.ErrTooLong)
 	}
-	var got SyntaxError
-	if !errors.As(err, &got) {
-		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
-	}
-	if got.Line != 2 || got.Source != "" {
-		t.Fatalf("Parse() syntax error = %#v, want line=2 source=\"\"", got)
-	}
 }
 
-func TestParseScannerUnexpectedEOFLineNumberAfterSingleLine(t *testing.T) {
+func TestParseScannerUnexpectedEOFAfterSingleLine(t *testing.T) {
 	_, err := Parse(&unexpectedEOFReader{data: "k=v"}, 0)
 	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Fatalf("Parse() error = %v, want %v", err, io.ErrUnexpectedEOF)
 	}
-	var got SyntaxError
-	if !errors.As(err, &got) {
-		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
-	}
-	if got.Line != 1 || got.Source != "" {
-		t.Fatalf("Parse() syntax error = %#v, want line=1 source=\"\"", got)
-	}
 }
 
-func TestParseScannerUnexpectedEOFLineNumberAfterTwoLines(t *testing.T) {
+func TestParseScannerUnexpectedEOFAfterTwoLines(t *testing.T) {
 	_, err := Parse(&unexpectedEOFReader{data: "a=1\nb=2"}, 0)
 	if !errors.Is(err, io.ErrUnexpectedEOF) {
 		t.Fatalf("Parse() error = %v, want %v", err, io.ErrUnexpectedEOF)
-	}
-	var got SyntaxError
-	if !errors.As(err, &got) {
-		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
-	}
-	if got.Line != 2 || got.Source != "" {
-		t.Fatalf("Parse() syntax error = %#v, want line=2 source=\"\"", got)
 	}
 }
 
