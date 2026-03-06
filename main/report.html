@@ -170,7 +170,9 @@ func scanLinesWithLineNumbers(scanLineNum, tokenLineNum *int) bufio.SplitFunc <s
 // Unquoted values are trimmed of whitespace.
 // Quoted values preserve whitespace inside the quotes.
 // Parsed values are always valid UTF-8.
-// Input must use LF (\n) or CRLF (\r\n) line endings; CR-only (\r) is not supported.
+// Input should use LF (\n) or CRLF (\r\n) line endings.
+// A trailing CR-only line ending on the final line is tolerated, but bare CR (\r)
+// characters elsewhere are rejected as syntax errors.
 // Lines are limited by bufio.Scanner's default token size (~64 KiB).
 //
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
