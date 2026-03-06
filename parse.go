@@ -2,6 +2,7 @@ package inifile
 
 import (
 	"bufio"
+	"bytes"
 	"io"
 	"regexp"
 	"strconv"
@@ -11,7 +12,24 @@ import (
 var (
 	iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
 	iniAssignRegex  = regexp.MustCompile(`^\s*([^=]+)\s*=\s*(.*)\s*$`)
+	iniUTF8BOM      = []byte("\uFEFF")
 )
+
+func scanLinesWithLineNumbers(scanLineNum, tokenLineNum *int) bufio.SplitFunc {
+	return func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		advance, token, err = bufio.ScanLines(data, atEOF)
+		if token != nil {
+			*tokenLineNum = *scanLineNum
+			if *tokenLineNum == 1 {
+				token = bytes.TrimPrefix(token, iniUTF8BOM)
+			}
+		}
+		if advance > 0 {
+			*scanLineNum += bytes.Count(data[:advance], []byte{'\n'})
+		}
+		return
+	}
+}
 
 // Parse reads INI data from an io.Reader and returns a new File.
 //
@@ -24,21 +42,18 @@ var (
 // the preexisting key's value using dupKeysJoin as a separator.
 //
 // You are allowed to pass in a nil io.Reader, which results in
-// a nil File and error.
+// a nil File and no error.
 func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
 	if r != nil {
+		scanLineNum := 1
+		tokenLineNum := 1
+		section := ""
+		lineSrc := ""
 		inif = make(File)
 		scanner := bufio.NewScanner(r)
-		section := ""
-		lineNum := 0
-		lineSrc := ""
+		scanner.Split(scanLinesWithLineNumbers(&scanLineNum, &tokenLineNum))
 		for err == nil && scanner.Scan() {
-			lineNum++
 			line := strings.TrimSpace(scanner.Text())
-			if lineNum == 1 {
-				// Trim UTF-8 BOM if present
-				line = strings.TrimPrefix(line, "\uFEFF")
-			}
 			lineSrc = line
 			if len(line) > 0 && line[0] != ';' && line[0] != '#' {
 				if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
@@ -54,16 +69,17 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
 				}
 			}
 		}
+		errLineNum := tokenLineNum
 		if err == nil {
-			lineSrc = ""
 			if err = scanner.Err(); err != nil {
-				lineNum++
+				errLineNum = scanLineNum
+				lineSrc = ""
 			}
 		}
 		if err != nil {
 			inif = nil
 			err = SyntaxError{
-				Line:   lineNum,
+				Line:   errLineNum,
 				Source: lineSrc,
 				Err:    err,
 			}

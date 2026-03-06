@@ -3,10 +3,28 @@ package inifile
 import (
 	"bufio"
 	"errors"
+	"io"
 	"strconv"
 	"strings"
 	"testing"
 )
+
+type unexpectedEOFReader struct {
+	data string
+	pos  int
+}
+
+func (r *unexpectedEOFReader) Read(p []byte) (n int, err error) {
+	if r.pos >= len(r.data) {
+		return 0, io.ErrUnexpectedEOF
+	}
+	n = copy(p, r.data[r.pos:])
+	r.pos += n
+	if r.pos >= len(r.data) {
+		return n, io.ErrUnexpectedEOF
+	}
+	return n, nil
+}
 
 func TestParseScannerError(t *testing.T) {
 	_, err := Parse(strings.NewReader("k="+strings.Repeat("a", 70*1024)+"\n"), 0)
@@ -26,6 +44,34 @@ func TestParseScannerErrorLineNumberAfterValidLine(t *testing.T) {
 	_, err := Parse(strings.NewReader("ok=1\nk="+strings.Repeat("a", 70*1024)+"\n"), 0)
 	if !errors.Is(err, bufio.ErrTooLong) {
 		t.Fatalf("Parse() error = %v, want %v", err, bufio.ErrTooLong)
+	}
+	var got SyntaxError
+	if !errors.As(err, &got) {
+		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
+	}
+	if got.Line != 2 || got.Source != "" {
+		t.Fatalf("Parse() syntax error = %#v, want line=2 source=\"\"", got)
+	}
+}
+
+func TestParseScannerUnexpectedEOFLineNumberAfterSingleLine(t *testing.T) {
+	_, err := Parse(&unexpectedEOFReader{data: "k=v"}, 0)
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
+		t.Fatalf("Parse() error = %v, want %v", err, io.ErrUnexpectedEOF)
+	}
+	var got SyntaxError
+	if !errors.As(err, &got) {
+		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
+	}
+	if got.Line != 1 || got.Source != "" {
+		t.Fatalf("Parse() syntax error = %#v, want line=1 source=\"\"", got)
+	}
+}
+
+func TestParseScannerUnexpectedEOFLineNumberAfterTwoLines(t *testing.T) {
+	_, err := Parse(&unexpectedEOFReader{data: "a=1\nb=2"}, 0)
+	if !errors.Is(err, io.ErrUnexpectedEOF) {
+		t.Fatalf("Parse() error = %v, want %v", err, io.ErrUnexpectedEOF)
 	}
 	var got SyntaxError
 	if !errors.As(err, &got) {
