@@ -184,16 +184,14 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) <span class="co
                 scanLineNum := 1
                 tokenLineNum := 1
                 section := ""
-                lineSrc := ""
+                line := ""
                 inif = make(File)
                 scanner := bufio.NewScanner(r)
                 scanner.Split(scanLinesWithLineNumbers(&amp;scanLineNum, &amp;tokenLineNum))
                 for err == nil &amp;&amp; scanner.Scan() </span><span class="cov8" title="1">{
-                        line := strings.TrimSpace(scanner.Text())
-                        lineSrc = line
+                        line = strings.TrimSpace(scanner.Text())
                         if len(line) &gt; 0 &amp;&amp; line[0] != ';' &amp;&amp; line[0] != '#' </span><span class="cov8" title="1">{
                                 if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
-                                        lineSrc = groups[2]
                                         var value string
                                         if value, err = ParseValue(groups[2]); err == nil </span><span class="cov8" title="1">{
                                                 inif.Section(section).Set(groups[1], value, dupKeysJoin)
@@ -213,7 +211,7 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) <span class="co
                         inif = nil
                         err = SyntaxError{
                                 Line:   tokenLineNum,
-                                Source: lineSrc,
+                                Source: line,
                                 Err:    err,
                         }
                 }</span>
