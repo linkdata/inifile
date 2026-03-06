@@ -162,6 +162,21 @@ func TestParseRejectsMalformedSectionHeader(t *testing.T) {
 	}
 }
 
+func TestParseRejectsCROnlyLineEndings(t *testing.T) {
+	_, err := Parse(strings.NewReader("a=1\rb=2\r"), 0)
+	if !errors.Is(err, ErrSyntax) {
+		t.Fatalf("errors.Is(err, ErrSyntax) = false, want true")
+	}
+
+	var got SyntaxError
+	if !errors.As(err, &got) {
+		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
+	}
+	if got.Line != 1 || got.Source != "a=1\rb=2" {
+		t.Fatalf("Parse() syntax error = %#v, want line=1 source=%q", got, "a=1\rb=2")
+	}
+}
+
 func TestParseSyntaxErrorWrapsSourceError(t *testing.T) {
 	_, err := Parse(strings.NewReader("k='broken\n"), 0)
 	if err == nil {

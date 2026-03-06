@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
-	iniAssignRegex  = regexp.MustCompile(`^\s*([^=]+)\s*=\s*(.*)\s*$`)
+	iniSectionRegex = regexp.MustCompile(`^\[([^\]\r\n]*)\](?:[ \t]*[;#][^\r\n]*)?$`)
+	iniAssignRegex  = regexp.MustCompile(`^[ \t]*([^\r\n=]+)[ \t]*=[ \t]*([^\r\n]*)[ \t]*$`)
 	iniUTF8BOM      = []byte("\uFEFF")
 )
 
@@ -37,6 +37,8 @@ func scanLinesWithLineNumbers(scanLineNum, tokenLineNum *int) bufio.SplitFunc {
 // Quoted values preserve whitespace inside the quotes.
 // Parsed values are always valid UTF-8.
 // Input must use LF (\n) or CRLF (\r\n) line endings; CR-only (\r) is not supported.
+// Lines are limited by bufio.Scanner's default token size (~64 KiB); longer
+// lines return a SyntaxError that wraps bufio.ErrTooLong.
 //
 // If dupKeysJoin is zero, a duplicate key will replace the previous value.
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
