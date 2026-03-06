@@ -56,7 +56,9 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
 		}
 		if err == nil {
 			lineSrc = ""
-			err = scanner.Err()
+			if err = scanner.Err(); err != nil {
+				lineNum++
+			}
 		}
 		if err != nil {
 			inif = nil

@@ -18,6 +18,7 @@ func ParseValue(s string) (value string, err error) {
 		default:
 			value = parseUnquotedValue(value)
 		}
+		value = strings.ToValidUTF8(value, "\uFFFD")
 	}
 	return
 }
@@ -71,5 +72,5 @@ func parseUnquotedValue(value string) string {
 	if idx := strings.IndexAny(value, ";#"); idx >= 0 {
 		value = strings.TrimSpace(value[:idx])
 	}
-	return strings.ToValidUTF8(value, "\uFFFD")
+	return value
 }

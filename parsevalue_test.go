@@ -49,3 +49,16 @@ func TestParseValueUnquotedCommentAlwaysValidUTF8(t *testing.T) {
 		t.Fatalf("ParseValue() value = %q, want %q", value, "\uFFFD")
 	}
 }
+
+func TestParseValueDoubleQuotedHexEscapeAlwaysValidUTF8(t *testing.T) {
+	value, err := ParseValue("\"\\xff\"")
+	if err != nil {
+		t.Fatalf("ParseValue() error = %v, want nil", err)
+	}
+	if !utf8.ValidString(value) {
+		t.Fatalf("ParseValue() produced invalid UTF-8: % x", []byte(value))
+	}
+	if value != "\uFFFD" {
+		t.Fatalf("ParseValue() value = %q, want %q", value, "\uFFFD")
+	}
+}
