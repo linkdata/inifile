@@ -38,15 +38,15 @@ func TestLoad(t *testing.T) {
 		},
 		{
 			name:    "tests/brokenquote.ini",
-			wantErr: SyntaxError{Line: 1, Source: "\"broken", Err: strconv.ErrSyntax},
+			wantErr: SyntaxError{Line: 1, Source: "key = \"broken", Err: strconv.ErrSyntax},
 		},
 		{
 			name:    "tests/brokensinglequote.ini",
-			wantErr: SyntaxError{Line: 1, Source: "'broken", Err: strconv.ErrSyntax},
+			wantErr: SyntaxError{Line: 1, Source: "key = 'broken", Err: strconv.ErrSyntax},
 		},
 		{
 			name:    "tests/trailingjunk.ini",
-			wantErr: SyntaxError{Line: 1, Source: "\"ok\"junk", Err: strconv.ErrSyntax},
+			wantErr: SyntaxError{Line: 1, Source: "key=\"ok\"junk", Err: strconv.ErrSyntax},
 		},
 		{
 			name:    "tests/nonexistant.ini",

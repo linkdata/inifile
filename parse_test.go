@@ -165,7 +165,7 @@ func TestParseSyntaxErrorWrapsSourceError(t *testing.T) {
 	if !errors.As(err, &got) {
 		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
 	}
-	if got.Line != 1 || got.Source != "'broken" {
+	if got.Line != 1 || got.Source != "k='broken" {
 		t.Fatalf("Parse() syntax error = %#v", got)
 	}
 	if !errors.Is(got.Err, strconv.ErrSyntax) {

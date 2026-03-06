@@ -50,16 +50,14 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
 		scanLineNum := 1
 		tokenLineNum := 1
 		section := ""
-		lineSrc := ""
+		line := ""
 		inif = make(File)
 		scanner := bufio.NewScanner(r)
 		scanner.Split(scanLinesWithLineNumbers(&scanLineNum, &tokenLineNum))
 		for err == nil && scanner.Scan() {
-			line := strings.TrimSpace(scanner.Text())
-			lineSrc = line
+			line = strings.TrimSpace(scanner.Text())
 			if len(line) > 0 && line[0] != ';' && line[0] != '#' {
 				if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
-					lineSrc = groups[2]
 					var value string
 					if value, err = ParseValue(groups[2]); err == nil {
 						inif.Section(section).Set(groups[1], value, dupKeysJoin)
@@ -79,7 +77,7 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
 			inif = nil
 			err = SyntaxError{
 				Line:   tokenLineNum,
-				Source: lineSrc,
+				Source: line,
 				Err:    err,
 			}
 		}
