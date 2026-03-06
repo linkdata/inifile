@@ -310,6 +310,7 @@ type Section map[string]string
 // If join is nonzero, the value is appended to any pre-existing value using join as the separator.
 //
 // Key strings are case-insensitive and ignore leading and trailing whitespace.
+// Panics if sect is nil.
 func (sect Section) Set(key, value string, join rune) <span class="cov8" title="1">{
         key = Key(key)
         if join != 0 </span><span class="cov8" title="1">{
@@ -383,7 +384,8 @@ import (
         "strings"
 )
 
-// Key returns s lowercased and with whitespace trimmed.
+// Key returns s lowercased (using strings.ToLower) and with whitespace trimmed.
+// This is not full Unicode case folding.
 func Key(s string) string <span class="cov8" title="1">{
         return strings.ToLower(strings.TrimSpace(s))
 }</span>
