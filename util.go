@@ -5,7 +5,8 @@ import (
 	"strings"
 )
 
-// Key returns s lowercased and with whitespace trimmed.
+// Key returns s lowercased (using strings.ToLower) and with whitespace trimmed.
+// This is not full Unicode case folding.
 func Key(s string) string {
 	return strings.ToLower(strings.TrimSpace(s))
 }
