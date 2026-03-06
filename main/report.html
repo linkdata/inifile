@@ -136,6 +136,7 @@ func (inif File) GetDefault(section, key, dflt string) string <span class="cov8"
 
 import (
         "bufio"
+        "bytes"
         "io"
         "regexp"
         "strconv"
@@ -145,7 +146,24 @@ import (
 var (
         iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
         iniAssignRegex  = regexp.MustCompile(`^\s*([^=]+)\s*=\s*(.*)\s*$`)
+        iniUTF8BOM      = []byte("\uFEFF")
 )
+
+func scanLinesWithLineNumbers(scanLineNum, tokenLineNum *int) bufio.SplitFunc <span class="cov8" title="1">{
+        return func(data []byte, atEOF bool) (advance int, token []byte, err error) </span><span class="cov8" title="1">{
+                advance, token, err = bufio.ScanLines(data, atEOF)
+                if token != nil </span><span class="cov8" title="1">{
+                        *tokenLineNum = *scanLineNum
+                        if *tokenLineNum == 1 </span><span class="cov8" title="1">{
+                                token = bytes.TrimPrefix(token, iniUTF8BOM)
+                        }</span>
+                }
+                <span class="cov8" title="1">if advance &gt; 0 </span><span class="cov8" title="1">{
+                        *scanLineNum += bytes.Count(data[:advance], []byte{'\n'})
+                }</span>
+                <span class="cov8" title="1">return</span>
+        }
+}
 
 // Parse reads INI data from an io.Reader and returns a new File.
 //
@@ -158,22 +176,19 @@ var (
 // the preexisting key's value using dupKeysJoin as a separator.
 //
 // You are allowed to pass in a nil io.Reader, which results in
-// a nil File and error.
+// a nil File and no error.
 func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) <span class="cov8" title="1">{
         if r != nil </span><span class="cov8" title="1">{
+                scanLineNum := 1
+                tokenLineNum := 1
+                section := ""
+                lineSrc := ""
                 inif = make(File)
                 scanner := bufio.NewScanner(r)
-                section := ""
-                lineNum := 0
-                lineSrc := ""
+                scanner.Split(scanLinesWithLineNumbers(&amp;scanLineNum, &amp;tokenLineNum))
                 for err == nil &amp;&amp; scanner.Scan() </span><span class="cov8" title="1">{
-                        lineNum++
                         line := strings.TrimSpace(scanner.Text())
-                        if lineNum == 1 </span><span class="cov8" title="1">{
-                                // Trim UTF-8 BOM if present
-                                line = strings.TrimPrefix(line, "\uFEFF")
-                        }</span>
-                        <span class="cov8" title="1">lineSrc = line
+                        lineSrc = line
                         if len(line) &gt; 0 &amp;&amp; line[0] != ';' &amp;&amp; line[0] != '#' </span><span class="cov8" title="1">{
                                 if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
                                         lineSrc = groups[2]
@@ -188,16 +203,17 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) <span class="co
                                 }</span>
                         }
                 }
-                <span class="cov8" title="1">if err == nil </span><span class="cov8" title="1">{
-                        lineSrc = ""
+                <span class="cov8" title="1">errLineNum := tokenLineNum
+                if err == nil </span><span class="cov8" title="1">{
                         if err = scanner.Err(); err != nil </span><span class="cov8" title="1">{
-                                lineNum++
+                                errLineNum = scanLineNum
+                                lineSrc = ""
                         }</span>
                 }
                 <span class="cov8" title="1">if err != nil </span><span class="cov8" title="1">{
                         inif = nil
                         err = SyntaxError{
-                                Line:   lineNum,
+                                Line:   errLineNum,
                                 Source: lineSrc,
                                 Err:    err,
                         }
