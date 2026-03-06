@@ -10,6 +10,7 @@ type Section map[string]string
 // If join is nonzero, the value is appended to any pre-existing value using join as the separator.
 //
 // Key strings are case-insensitive and ignore leading and trailing whitespace.
+// Panics if sect is nil.
 func (sect Section) Set(key, value string, join rune) {
 	key = Key(key)
 	if join != 0 {
