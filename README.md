@@ -13,7 +13,8 @@ Supports line comments, trailing comments and quoted values.
 Unquoted values are whitespace trimmed; quoted values preserve whitespace inside quotes.
 Parsed values are always valid UTF-8.
 Line endings must be LF (`\n`) or CRLF (`\r\n`); CR-only (`\r`) line endings are not supported.
-Lines are limited by `bufio.Scanner`'s default token size (about 64 KiB per line); longer lines fail with a syntax error wrapping `bufio.ErrTooLong`.
+Lines are limited by `bufio.Scanner`'s default token size (about 64 KiB per line); longer lines fail with scanner errors (for example `bufio.ErrTooLong`).
+Scanner/read errors are returned as-is and no `File` is returned.
 
 Keys appearing more than once will either replace previous values or append to them with a separator.
 
