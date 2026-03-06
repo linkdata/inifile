@@ -1,6 +1,9 @@
 package inifile
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // ErrSyntax is returned when there is a syntax error in an INI file.
 var ErrSyntax SyntaxError
@@ -20,5 +23,13 @@ func (e SyntaxError) Unwrap() error {
 }
 
 func (e SyntaxError) Error() string {
-	return fmt.Sprintf("invalid INI syntax on line %d: %s", e.Line, e.Source)
+	var linetxt string
+	err := e.Err
+	if err == nil {
+		err = strconv.ErrSyntax
+	}
+	if e.Line > 0 {
+		linetxt = fmt.Sprintf("line %d: ", e.Line)
+	}
+	return fmt.Sprintf("%s%v: %q", linetxt, err, e.Source)
 }

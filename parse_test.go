@@ -16,9 +16,12 @@ func TestParseScannerError(t *testing.T) {
 }
 
 func TestParseNilReader(t *testing.T) {
-	_, err := Parse(nil, 0)
-	if !errors.Is(err, ErrNilReader) {
-		t.Fatalf("Parse() error = %v, want %v", err, ErrNilReader)
+	inif, err := Parse(nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inif != nil {
+		t.Fatal("expected nil inif")
 	}
 }
 

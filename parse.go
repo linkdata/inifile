@@ -2,16 +2,15 @@ package inifile
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
 var (
 	iniSectionRegex = regexp.MustCompile(`^\[([^\]]*)\](?:\s*[;#].*)?$`)
-	iniAssignRegex  = regexp.MustCompile(`^([^=]+)=(.*)$`)
-	ErrNilReader    = errors.New("nil reader")
+	iniAssignRegex  = regexp.MustCompile(`^\s*([^=]+)\s*=\s*(.*)\s*$`)
 )
 
 // Parse reads INI data from an io.Reader and returns a new File.
@@ -24,45 +23,49 @@ var (
 // If dupKeysJoin is nonzero, a duplicate key will append it's value to
 // the preexisting key's value using dupKeysJoin as a separator.
 //
-// r must be a non-nil reader. Passing a nil reader returns ErrNilReader.
-func Parse(r io.Reader, dupKeysJoin rune) (File, error) {
-	if r == nil {
-		return nil, ErrNilReader
-	}
-	inif := make(File)
-	scanner := bufio.NewScanner(r)
-	section := ""
-	lineNum := 0
-	for scanner.Scan() {
-		lineNum++
-		line := strings.TrimSpace(scanner.Text())
-		if lineNum == 1 {
-			line = strings.TrimPrefix(line, "\uFEFF")
-		}
-		if len(line) > 0 && line[0] != ';' && line[0] != '#' {
-			if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
-				value, err := ParseValue(groups[2])
-				if err != nil {
-					return nil, SyntaxError{
-						Line:   lineNum,
-						Source: strings.TrimSpace(groups[2]),
-						Err:    err,
+// You are allowed to pass in a nil io.Reader, which results in
+// a nil File and error.
+func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
+	if r != nil {
+		inif = make(File)
+		scanner := bufio.NewScanner(r)
+		section := ""
+		lineNum := 0
+		lineSrc := ""
+		for err == nil && scanner.Scan() {
+			lineNum++
+			line := strings.TrimSpace(scanner.Text())
+			if lineNum == 1 {
+				// Trim UTF-8 BOM if present
+				line = strings.TrimPrefix(line, "\uFEFF")
+			}
+			lineSrc = line
+			if len(line) > 0 && line[0] != ';' && line[0] != '#' {
+				if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
+					lineSrc = groups[2]
+					var value string
+					if value, err = ParseValue(groups[2]); err == nil {
+						inif.Section(section).Set(groups[1], value, dupKeysJoin)
 					}
-				}
-				inif.Section(section).Set(groups[1], value, dupKeysJoin)
-			} else if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil {
-				section = Key(groups[1])
-			} else {
-				return nil, SyntaxError{
-					Line:   lineNum,
-					Source: line,
+				} else if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil {
+					section = Key(groups[1])
+				} else {
+					err = strconv.ErrSyntax
 				}
 			}
 		}
+		if err == nil {
+			lineSrc = ""
+			err = scanner.Err()
+		}
+		if err != nil {
+			inif = nil
+			err = SyntaxError{
+				Line:   lineNum,
+				Source: lineSrc,
+				Err:    err,
+			}
+		}
 	}
-	err := scanner.Err()
-	if err != nil {
-		inif = nil
-	}
-	return inif, err
+	return
 }
