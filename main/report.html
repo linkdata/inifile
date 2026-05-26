@@ -193,14 +193,18 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) <span class="co
                 for err == nil &amp;&amp; scanner.Scan() </span><span class="cov8" title="1">{
                         line = strings.TrimSpace(scanner.Text())
                         if len(line) &gt; 0 &amp;&amp; line[0] != ';' &amp;&amp; line[0] != '#' </span><span class="cov8" title="1">{
-                                if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
+                                if line[0] == '[' </span><span class="cov8" title="1">{
+                                        if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
+                                                section = Key(groups[1])
+                                        }</span> else<span class="cov8" title="1"> {
+                                                err = strconv.ErrSyntax
+                                        }</span>
+                                } else<span class="cov8" title="1"> if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
                                         var value string
                                         if value, err = ParseValue(groups[2]); err == nil </span><span class="cov8" title="1">{
                                                 inif.Section(section).Set(groups[1], value, dupKeysJoin)
                                         }</span>
-                                } else<span class="cov8" title="1"> if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil </span><span class="cov8" title="1">{
-                                        section = Key(groups[1])
-                                }</span> else<span class="cov8" title="1"> {
+                                } else<span class="cov8" title="1"> {
                                         err = strconv.ErrSyntax
                                 }</span>
                         }
