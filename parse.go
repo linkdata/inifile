@@ -59,13 +59,17 @@ func Parse(r io.Reader, dupKeysJoin rune) (inif File, err error) {
 		for err == nil && scanner.Scan() {
 			line = strings.TrimSpace(scanner.Text())
 			if len(line) > 0 && line[0] != ';' && line[0] != '#' {
-				if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
+				if line[0] == '[' {
+					if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil {
+						section = Key(groups[1])
+					} else {
+						err = strconv.ErrSyntax
+					}
+				} else if groups := iniAssignRegex.FindStringSubmatch(line); groups != nil {
 					var value string
 					if value, err = ParseValue(groups[2]); err == nil {
 						inif.Section(section).Set(groups[1], value, dupKeysJoin)
 					}
-				} else if groups := iniSectionRegex.FindStringSubmatch(line); groups != nil {
-					section = Key(groups[1])
 				} else {
 					err = strconv.ErrSyntax
 				}

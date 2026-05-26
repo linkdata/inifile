@@ -115,6 +115,41 @@ k2=v2
 	}
 }
 
+func TestParseSectionHeadersBeforeAssignments(t *testing.T) {
+	inif, err := Parse(strings.NewReader(`
+[a=b]
+k1=v1
+[s] # x=y
+k2=v2
+`), 0)
+	if err != nil {
+		t.Fatalf("Parse() error = %v, want nil", err)
+	}
+
+	if got, ok := inif.Get("a=b", "k1"); !ok || got != "v1" {
+		t.Fatalf("Parse() value a=b/k1 = %q, %v; want %q, true", got, ok, "v1")
+	}
+	if got, ok := inif.Get("s", "k2"); !ok || got != "v2" {
+		t.Fatalf("Parse() value s/k2 = %q, %v; want %q, true", got, ok, "v2")
+	}
+}
+
+func TestParseRejectsBracketedAssignment(t *testing.T) {
+	_, err := Parse(strings.NewReader("[literal]=assignment\n"), 0)
+	want := SyntaxError{Line: 1, Source: "[literal]=assignment"}
+	if !errors.Is(err, ErrSyntax) {
+		t.Fatalf("errors.Is(err, ErrSyntax) = false, want true")
+	}
+
+	var got SyntaxError
+	if !errors.As(err, &got) {
+		t.Fatalf("errors.As(err, *SyntaxError) = false, want true")
+	}
+	if got.Line != want.Line || got.Source != want.Source {
+		t.Fatalf("Parse() syntax error = %#v, want %#v", got, want)
+	}
+}
+
 func TestParseRejectsMalformedSectionHeader(t *testing.T) {
 	_, err := Parse(strings.NewReader("[a][b]\nk=v\n"), 0)
 	want := SyntaxError{Line: 1, Source: "[a][b]"}
